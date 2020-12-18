@@ -99,8 +99,8 @@ public class PayoneRestAPI {
         refundData.setRequest("refund");
         refundData.setAmount(-10L);
         refundData.setCurrency("EUR");
-        refundData.setSequencenumber(1L);
-        refundData.setTxid(479269645L);
+        refundData.setSequencenumber(refundData.getSequencenumber());
+        refundData.setTxid(refundData.getTxid());
 
         MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         Field[] allFields = RefundData.class.getDeclaredFields();
