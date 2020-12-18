@@ -10,10 +10,12 @@ public class RefundData {
     private Long txid;
     private Long sequencenumber;
     private Long amount;
-    private String currency;
+    private String currency = "EUR";
     private Long mid = 47552L;
     private Long portalid = 2034634L;
     private String key = "cd39712dcc4f556bed63a0bd70b44060";
     private String mode = "test";
+    private String status = "APPROVED";
+    private String transaction_param = "Test";
     //private String narrative_text;
 }
