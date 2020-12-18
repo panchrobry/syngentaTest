@@ -13,6 +13,16 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>payone</name>
 	<description>Demo project for Spring Boot</description>
+	<repositories>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>Maven Repository Switchboard</name>
+			<url>http://repo1.maven.org/maven2</url>
+		</repository>
+	</repositories>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,6 +31,13 @@
 	</properties>
 
 	<dependencies>
+		<!-- https://mvnrepository.com/artifact/javax/javaee-api -->
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<version>8.0.1</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
