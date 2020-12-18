@@ -4,13 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import org.springframework.web.servlet.view.RedirectView;
 
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Produces;
 import java.lang.reflect.Field;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -151,6 +157,13 @@ public class PayoneRestAPI {
         ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
 
         Response body = response.getBody();
+    }
+
+    @PostMapping(value = "/notify")
+    @Consumes({ javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED })
+    @Produces({ javax.ws.rs.core.MediaType.TEXT_PLAIN })
+    public void capture(@BeanParam TransactionStatus status) throws IllegalAccessException {
+        System.out.println("Refund: "+  status.getTransaction_param());
     }
 
     @GetMapping("/hash")
