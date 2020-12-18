@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!--    <link href="www.your-url.com/static/client_api.css" rel="stylesheet" type="text/css" media="screen" />
+    <link rel="shortcut icon" type="image/x-icon" href="www.your-url.com/static/favicon.ico" />-->
+    <meta charset="UTF-8">
+    <title>Client API with the new hosted iFrames</title>
+</head>
+<body>
+<script type="text/javascript" src="https://secure.pay1.de/client-api/js/v1/payone_hosted_min.js"></script>
+<form name="form" method="post">
+    <fieldset>
+        <div id="loading" style="padding: 50px; border: 5px solid orange;">
+            <p style="font-size: 2em; color: orange; text-align: center;">iFrames still loading...</p>
+        </div>
+
+        <img src="https://cdn.pay1.de/cc/v/m/transparent.png" alt="" id="visa" style="border: #FFF solid 3px; border-radius: 5px; opacity: 0.1; width: 100px; padding: 3px;" />
+        <img src="https://cdn.pay1.de/cc/m/m/transparent.png" alt="" id="mastercard" style="border: #FFF solid 3px; border-radius: 5px; opacity: 0.1; width: 100px; padding: 3px;" />
+        <br />
+
+        <label for="cardpanInput">Cardpan:</label>
+        <span class="inputIframe" id="cardpan"></span> <!-- Container for PAYONE-Script -> PAYONE will place an iFrame in here -->
+
+        <label for="cvcInput">CVC:</label>
+        <span class="inputIframe" id="cardcvc2"></span>
+
+        <label for="expireInput">Expire date (mm/yyyy):</label>
+        <span class="inputIframe" id="expireInput">
+            <span id="cardexpiremonth"></span>
+            <span id="cardexpireyear"></span>
+        </span>
+
+        <label for="firstname">Firstname:</label>
+        <input id="firstname" type="text" name="firstname" value="" placeholder="Firstname">
+
+        <label for="lastname">Lastname:</label>
+        <input id="lastname" type="text" name="lastname" value="" placeholder="Lastname">
+
+        <div id="error"></div>
+        <br />
+        <input id="submit" type="button" value="Pay" />
+    </fieldset>
+</form>
+
+<form id="paymentform" name="paymentform" th:action="@{/payone/api/payment}" th:object="${paymentData}" method="post">
+    <input type="hidden" name="pseudocardpan" id="pseudocardpan" th:field="*{pseudocardpan}">
+    <input type="hidden" name="truncatedcardpan" id="truncatedcardpan" th:field="*{truncatedcardpan}">
+    <input type="hidden" name="cardtypeResponse" id="cardtypeResponse" th:field="*{cardtype}">
+    <input type="hidden" name="cardexpiredateResponse" id="cardexpiredateResponse" th:field="*{cardexpiredate}">
+</form>
+<script>
+
+    var request,
+        supportedCardtypes = ["#", "V", "M"],
+        config;
+
+    /*
+
+    // Some overwriting and placeholder enabling examples.
+
+    // Example for enabling placeholder attribute in <input type="text" /> fields.
+    // Defaults to empty, so placeholder will not be applied.
+    Payone.ClientApi.Language.de.placeholders.cardpan = 'Kartennummer';
+    Payone.ClientApi.Language.de.placeholders.cvc = 'CVC';
+    // Please keep in mind: placeholders are not supported for input type “select”.
+    Payone.ClientApi.Language.de.placeholders.expireMonth = '(MM)';
+    Payone.ClientApi.Language.de.placeholders.expireYear = '(JJJJ)';
+
+    // Example for overwriting error messages in english.
+    Payone.ClientApi.Language.en.invalidCardpan: "your error text";
+    Payone.ClientApi.Language.en.invalidCvc: "your error text";
+    Payone.ClientApi.Language.en.invalidPanForCardtype: "your error text";
+    Payone.ClientApi.Language.en.invalidCardtype: "your error text";
+    Payone.ClientApi.Language.en.invalidExpireDate: "your error text";
+    Payone.ClientApi.Language.en.invalidIssueNumber: "your error text";
+    Payone.ClientApi.Language.en.transactionRejected: "your error text";
+
+    // Example for overwriting default month i18n in english (instead of 1, 2, 3 etc.)
+    Payone.ClientApi.Language.en.months.month1 = "January";
+    Payone.ClientApi.Language.en.months.month2 = "February";
+    Payone.ClientApi.Language.en.months.month3 = "March";
+
+    */
+
+    config = {
+        fields: {
+            cardpan: {
+                selector: "cardpan",
+                style: "font-size: 14px; border: 1px solid #000;",
+                styleFocus: "font-size: 12px; border: 1px solid orange;",
+                type: "input"
+            },
+            cardcvc2: {
+                selector: "cardcvc2",
+                type: "password",  // Could be "text" as well.
+                style: "font-size: 14px; border: 1px solid #000;",
+                size: "3",
+                maxlength: "3",
+                length: { "V": 3, "M": 3 }
+            },
+            cardexpiremonth: {
+                selector: "cardexpiremonth",         // put name of your div-container here
+                type: "select",                      // select (default), text, tel (for alternative keyboards on mobile devices)
+                size: "2",
+                maxlength: "2",
+                iframe: {
+                    width: "50px"
+                }
+            },
+            cardexpireyear: {
+                selector: "cardexpireyear",          // put name of your div-container here
+                type: "select",                      // select(default), text, password, tel
+                iframe: {
+                    width: "80px"
+                }
+            },
+            cardtype: {
+                selector: "cardtype",
+                cardtypes: supportedCardtypes
+            }
+        },
+        defaultStyle: {
+            input: "font-size: 1em; border: 1px solid #000; width: 175px;",
+            select: "font-size: 1em; border: 1px solid #000;",
+            iframe: {
+                height: "22px",
+                width: "180px"
+            }
+        },
+
+        autoCardtypeDetection: {
+            supportedCardtypes: supportedCardtypes,
+            callback: function(detectedCardtype) {
+                if (detectedCardtype === 'V') {
+                    document.getElementById('visa').style.borderColor = '#00F';
+                    document.getElementById('mastercard').style.borderColor = '#FFF';
+                    document.getElementById('visa').style.opacity = '1';
+                    document.getElementById('mastercard').style.opacity = '0.1';
+                } else if (detectedCardtype === 'M') {
+                    document.getElementById('visa').style.borderColor = '#FFF';
+                    document.getElementById('mastercard').style.borderColor = '#00F';
+                    document.getElementById('visa').style.opacity = '0.1';
+                    document.getElementById('mastercard').style.opacity = '1';
+                } else {
+                    document.getElementById('visa').style.borderColor = '#FFF';
+                    document.getElementById('mastercard').style.borderColor = '#FFF';
+                    document.getElementById('visa').style.opacity = '0.1';
+                    document.getElementById('mastercard').style.opacity = '0.1';
+                }
+            } //,
+            // deactivate: true // To turn off automatic card type detection.
+        },
+
+        events: {
+            // Javascript callback function will be triggered once “hosted iFrames” are completely loaded
+            rendered: function () {
+                document.getElementById('loading').remove()
+            }
+        },
+
+        language: Payone.ClientApi.Language.de, //, // Language to display error-messages (default: Payone.ClientApi.Language.en)
+        error: "error" // area to display error-messages (optional)
+    };
+    request = {
+        api_version: '3.11',
+        request: 'creditcardcheck',                  // fixed value
+        responsetype: 'JSON',                        // fixed value
+        mode: 'test',                                // desired mode
+        mid: '47552',                                // your MID
+        aid: '47578',                                // your AID
+        portalid: '2034634',                         // your PortalId
+        encoding: 'UTF-8',                           // desired encoding
+        storecarddata: 'yes',                        // fixed value
+        // hash calculated over your request-parameter-values (alphabetical request-order) plus PMI portal key
+        // hash: '1cf456bf692453613ebb992a3fb859cc347ddc7e94e2ca764efbe8b0089de6964ab1266df0831e59de89dc5291070fe7'
+        hash: '3e3db8ec6fb462a19a33d6461e55728e0d1939000fd90e145fd66c7e9c1e3e52dee27635ebc6992275d919a3d0a7e2bc'     // see Chapter 3.1.5.3
+    };
+    var iframes = new Payone.ClientApi.HostedIFrames(config, request);
+
+    // Function called by submitting PAY-button
+    function pay() {
+
+        if (iframes.isComplete()) {
+            // Perform "CreditCardCheck" to create and get a PseudoCardPan; then call your function "payCallback"
+            iframes.creditCardCheck('payCallback');
+        } else {
+            alert("Not complete. Nothing done.");
+        }
+    }
+
+    document.getElementById("submit").onclick = function () {
+        pay();
+    };
+
+    function payCallback(response) {
+        if (response.status === "VALID") {
+            document.getElementById("pseudocardpan").value = response.pseudocardpan;
+            document.getElementById("truncatedcardpan").value = response.truncatedcardpan;
+            document.getElementById("cardtypeResponse").value = response.cardtype;
+            document.getElementById("cardexpiredateResponse").value = response.cardexpiredate;
+            document.getElementById("paymentform").submit();
+        }
+    }
+</script>
+</body>
+</html>

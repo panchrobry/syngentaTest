@@ -1,0 +1,201 @@
+<html xmlns:th="https://www.thymeleaf.org">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Simple example for PAYONE hosted-iFrame mode</title>
+
+    <style type="text/css" media="screen, projection">
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #FFF;
+            color: #000;
+            font: 0.9em "Helvetica";
+        }
+        fieldset {
+            padding: 1em;
+            border: 1px solid #000;
+            width: 275px;
+            margin: 10px;
+        }
+        label {
+            margin-right: 10px;
+            float: left;
+            width: 80px;
+            padding-top: 0.3em;
+            text-align: right;
+        }
+        input, select{
+            font-size: 1em;
+            border: 1px solid #000;
+            padding: 0.1em;
+        }
+        select {
+            margin-right: 10px;
+        }
+
+        input, .inputIframe, select {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            width: 175px;
+        }
+
+        #paymentsubmit {
+            float: right;
+            width: auto;
+            padding: 5px;
+            margin-bottom: 0px;
+            margin-right: 10px;
+        }
+        #errorOutput {
+
+            text-align: center;
+            color: #ff0000;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+<script type="text/javascript" src="https://secure.pay1.de/client-api/js/v1/payone_hosted_min.js"></script>
+<form id="paymentform" name="paymentform" th:action="@{/payone/api/payment}" th:object="${paymentData}" method="post">
+    <fieldset>
+        <input type="hidden" name="pseudocardpan" id="pseudocardpan" th:field="*{pseudocardpan}">
+        <input type="hidden" name="truncatedcardpan" id="truncatedcardpan" th:field="*{truncatedcardpan}">
+<!--        <input type="hidden" name="aid" value="47578">
+        <input type="hidden" name="amount" value="1499">
+        <input type="hidden" name="api_version" value="3.11">
+        <input type="hidden" name="clearingtype" value="cc">
+        <input type="hidden" name="currency" value="EUR">
+        <input type="hidden" name="de[1]" value="Jurassic">
+        <input type="hidden" name="encoding" value="UTF-8">
+        <input type="hidden" name="id[1]" value="1">
+        <input type="hidden" name="mid" value="47552">
+        <input type="hidden" name="mode" value="test">
+        <input type="hidden" name="no[1]" value="1">
+        <input type="hidden" name="portalid" value="2034634">
+        <input type="hidden" name="pr[1]" value="1499">
+        <input type="hidden" name="reference" value="1234567">
+        <input type="hidden" name="request" value="preauthorization">
+        <input type="hidden" name="va[1]" value="19">
+        <input type="hidden" name="hash" value="ba65372e1f224d3b1eee997b6940a84f35aad04fbef5a6f85231abb423d2b5c8214bcf5b89c5957cc141443a6ad838c1">-->
+
+        <!-- place your       input fields -->
+        <label for="cardtypeInput">Card type:</label>
+        <span id="cardtype" class="inputIframe"></span>
+
+        <label for="cardpanInput">Cardpan:</label>
+        <span id="cardpan" class="inputIframe"></span>
+
+        <label for="cvcInput">CVC:</label>
+        <span id="cardcvc2" class="inputIframe"></span>
+
+        <label for="expireInput">Expire Date:</label>
+        <span id="expireInput" class="inputIframe">
+            <span id="cardexpiremonth"></span>
+            <span id="cardexpireyear"></span>
+        </span>
+
+        <label for="firstnameInput">Firstname:</label>
+        <input id="firstname" type="text" name="firstname" value="">
+
+        <label for="lastnameInput">Lastname:</label>
+        <input id="lastname" type="text" name="lastname" value="">
+
+        <div id="errorOutput"></div>
+
+        <input id="paymentsubmit" type="button" value="Submit" onclick="check();">
+    </fieldset>
+</form>
+
+<div id="paymentformDiv"></div>
+<script>
+    var request, config;
+    config = {
+        fields: {
+            cardtype: {
+                selector: "cardtype",                // put name of your div-container here
+                cardtypes: ["V", "M", "A"]           // define possible cardtypes in PAYONE iFrame
+            },
+            cardpan: {
+                selector: "cardpan",                 // put name of your div-container here
+                type: "text",                        // text (default), password, tel
+                style: "font-size: 1em; border: 1px solid #000;"
+            },
+            cardcvc2: {
+                selector: "cardcvc2",                // put name of your div-container here
+                type: "password",                    // select(default), text, password, tel
+                style: "font-size: 1em; border: 1px solid #000;",
+                size: "4",
+                maxlength: "4",                      // set max. length for CVC input; empty values possible
+                length: { "A": 4, "V": 3, "M": 3, "J": 0 } // set required CVC length per cardtype
+                // if set exact length required; 0=CVC input disabled
+            },
+            cardexpiremonth: {
+                selector: "cardexpiremonth",         // put name of your div-container here
+                type: "select",                      // select(default), text, password, tel
+                size: "2",
+                maxlength: "2",
+                iframe: {
+                    width: "50px"
+                }
+            },
+            cardexpireyear: {
+                selector: "cardexpireyear",          // put name of your div-container here
+                type: "select",                      // select(default), text, password, tel
+                iframe: {
+                    width: "80px"
+                }
+            }
+        },
+        defaultStyle: {
+            input: "font-size: 1em; border: 1px solid #000; width: 175px;",
+            select: "font-size: 1em; border: 1px solid #000;",
+            iframe: {
+                height: "33px",
+                width: "180px"
+            }
+        },
+        error: "errorOutput",                        // area to display error-messages (optional)
+        language: Payone.ClientApi.Language.de       // Language to display error-messages
+                                                     // (default: Payone.ClientApi.Language.en)
+    };
+    request = {
+		api_version: '3.11',
+        request: 'creditcardcheck',                  // fixed value
+        responsetype: 'JSON',                        // fixed value
+        mode: 'test',                                // desired mode
+        mid: '47552',                                // your MID
+        aid: '47578',                                // your AID
+        portalid: '2034634',                         // your PortalId
+        encoding: 'UTF-8',                           // desired encoding
+        storecarddata: 'yes',                        // fixed value
+        // hash calculated over your request-parameter-values (alphabetical request-order) plus PMI portal key
+        // hash: '1cf456bf692453613ebb992a3fb859cc347ddc7e94e2ca764efbe8b0089de6964ab1266df0831e59de89dc5291070fe7'
+        hash: '3e3db8ec6fb462a19a33d6461e55728e0d1939000fd90e145fd66c7e9c1e3e52dee27635ebc6992275d919a3d0a7e2bc'     // see Chapter 3.1.5.3
+    };
+    var iframes = new Payone.ClientApi.HostedIFrames(config, request);
+    function check() {                               // Function called by submitting PAY-button
+        if (iframes.isComplete()) {
+            iframes.creditCardCheck('checkCallback');// Perform "CreditCardCheck" to create and get a
+                                                     // PseudoCardPan; then call your function "checkCallback"
+			
+        } else {
+            console.debug("not complete");
+        }
+    }
+    function checkCallback(response) {
+        console.debug(response);
+        if (response.status === "VALID") {
+            document.getElementById("pseudocardpan").value = response.pseudocardpan;
+            document.getElementById("truncatedcardpan").value = response.truncatedcardpan;
+            document.getElementById("paymentform").submit();
+        }
+    }
+</script>
+</body>
+</html>
