@@ -121,7 +121,7 @@ public class PayoneRestAPI {
 
         //Response body = response.getBody();
         ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-        System.out.println("");
+        System.out.println(response.getBody());
     }
 
     @PostMapping(value = "/capture")
