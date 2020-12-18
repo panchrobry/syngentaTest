@@ -97,9 +97,10 @@ public class PayoneRestAPI {
         String url = "https://api.pay1.de/post-gateway/";
 
         refundData.setRequest("refund");
-        refundData.setAmount(-1000L);
+        refundData.setAmount(-10L);
         refundData.setCurrency("EUR");
         refundData.setSequencenumber(1L);
+        refundData.setTxid(479269645L);
 
         MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         Field[] allFields = RefundData.class.getDeclaredFields();
